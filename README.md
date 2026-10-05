@@ -12,7 +12,7 @@
 |---|---|
 | 📓 분석 노트북 (SQL + 결과 + 차트) | [`notebooks/analysis.ipynb`](notebooks/analysis.ipynb) |
 | 📊 대시보드 (Power BI) | _준비 중_ |
-| 🧪 브라우저에서 직접 SQL 실행 | `docs/index.html` (GitHub Pages) |
+| 🧪 브라우저에서 직접 SQL 실행 | [SQL 연습장 열기](https://gounig.github.io/scm-inventory-risk/) |
 
 ---
 
