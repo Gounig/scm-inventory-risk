@@ -25,6 +25,14 @@ CREATE TABLE incoming_orders (
     today      TEXT      -- 검토하는 날 (보통 오늘)
 );
 
+-- 예시 오더 (가상). 실제로 쓸 때는 이 부분을 새 오더로 바꿔 넣는다.
+INSERT INTO incoming_orders VALUES
+    ('S-DEMO01-01-24', '64667109',     80,  '2024-06-28', '2024-06-10'),
+    ('S-DEMO01-01-24', '95154-39627',  150, '2024-06-28', '2024-06-10'),
+    ('S-DEMO01-01-24', '0K19A-86-609', 50,  '2024-06-25', '2024-06-10'),
+    ('S-DEMO01-01-24', '0K21A45420',   40,  '2024-06-30', '2024-06-10'),
+    ('S-DEMO01-01-24', '0K23A-10-586', 30,  '2024-07-20', '2024-06-10');
+
 DROP VIEW IF EXISTS reorder_recommendation;
 CREATE VIEW reorder_recommendation AS
 WITH io AS (
