@@ -11,7 +11,7 @@
 | 보는 방법 | 링크 |
 |---|---|
 | 📓 분석 노트북 (SQL + 결과 + 차트) | [`notebooks/analysis.ipynb`](notebooks/analysis.ipynb) |
-| 📊 대시보드 (Tableau) | _준비 중_ |
+| 📊 대시보드 (Power BI) | _준비 중_ |
 | 🧪 브라우저에서 직접 SQL 실행 | `docs/index.html` (GitHub Pages) |
 
 ---
@@ -95,7 +95,34 @@
 
 (검토일 2024-06-10 기준, 전체 과정은 노트북 3-③ 참고)
 
-## 5. 실행 방법
+## 5. 해결 방안
+
+### 원인별 해결 방법
+
+| 원인 | 해결 방법 | 사용 SQL |
+|---|---|---|
+| A. 입고 지연 | 오더 접수 시 거래처별 P80으로 **발주 기한** 계산 → 기한 3일 전 `중간`, 초과 시 `높음` 알림 | `reorder_recommendation` |
+| B. 발주 지연 | 선적일 확정 후 추가된 오더는 처음부터 `높음` 표시 → 영업·바이어와 선적일 재협의 | `reorder_recommendation` |
+| C. 입고됐는데 누락 | 선적 7일 전 **입고 완료 + 미배정 품목** 목록을 뽑아 창고와 확인 (가상 데이터 기준 누락 19줄 중 11줄이 선적 8일 이상 전 입고) | `bc_lines` 응용 |
+| 중복 구매 | 발주 전 **잔여 재고 먼저 차감**, 부족분만 발주 | `recommended_po_qty` |
+
+### 업무 흐름
+
+```
+오더 접수
+  → ① 잔여 재고 차감
+  → ② 권장 발주량 · 발주 기한 확인
+  → ③ 위험도 높음/중간이면 담당자 알림
+  → ④ 선적 7일 전 미배정 입고품 체크
+```
+
+### 기대 효과 (가상 데이터 기준 추정)
+
+- 기한보다 늦게 발주한 114줄이 기한 안 발주와 같은 비율(19.5%)로만 백카톤이 됐다면 → 51줄 → 22줄
+- 분석 대상 백카톤 95줄 중 **약 30%(29줄) 감소**
+- 가상 데이터라 숫자 자체보다 **효과를 추정하는 방식**을 보여 주는 예시
+
+## 6. 실행 방법
 
 ```bash
 pip install -r requirements.txt
@@ -117,7 +144,7 @@ python scripts/load_erp.py data/private private.db
 - 담당자 이름 등 개인정보 컬럼은 읽지 않음
 - `data/private/`, `*.db` 는 `.gitignore` 로 업로드에서 제외
 
-## 6. 폴더 구조
+## 7. 폴더 구조
 
 ```
 ├── sql/                 # 01 스키마 → 05 권장 발주 (순서대로 실행)
@@ -138,7 +165,7 @@ python scripts/load_erp.py data/private private.db
     └── sql-asm.js       # 브라우저용 SQLite 엔진 (sql.js, MIT)
 ```
 
-## 7. 한계와 다음 단계
+## 8. 한계와 다음 단계
 
 - 재고 파일이 **추출 시점 한 장**뿐이라, 과거 특정 날짜의 재고를 정확히 알 수 없음
   → "재사용한 날 ±14일 안에 또 구매" 를 중복 구매 후보로 간접 추정
@@ -146,4 +173,4 @@ python scripts/load_erp.py data/private private.db
 - 권장값은 참고용이며 최종 판단은 담당자가 함
 
 ## 기술 스택
-SQLite 3 (View, CTE, Window Function) · Python (pandas, matplotlib, Jupyter) · Tableau · sql.js
+SQLite 3 (View, CTE, Window Function) · Python (pandas, matplotlib, Jupyter) · Power BI · sql.js
