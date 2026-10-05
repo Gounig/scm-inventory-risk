@@ -1,0 +1,411 @@
+<title>백카톤 SQL 연습장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 왼쪽 단계 목록 + 오른쪽 설명·SQL 편집기·결과표. 좁은 화면에서는 위아래로 쌓임 */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --ink:#1d2321; --muted:#5d6764; --line:#dfe3e0;
+  --accent:#1f6f5c; --accent-soft:#e2efe9; --code-bg:#f0f2ef; --warn:#a2561a; --warn-soft:#f8ecdf;
+  --sans:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1b211f; --ink:#e4e9e6; --muted:#9aa5a1; --line:#2c3532;
+  --accent:#5fbf9f; --accent-soft:#1e3a31; --code-bg:#111614; --warn:#e3a067; --warn-soft:#3a2a1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1b211f; --ink:#e4e9e6; --muted:#9aa5a1; --line:#2c3532;
+  --accent:#5fbf9f; --accent-soft:#1e3a31; --code-bg:#111614; --warn:#e3a067; --warn-soft:#3a2a1c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:24px 48px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:20px}
+header h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-0.01em}
+header p{margin:0;color:var(--muted);font-size:13px}
+.status{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.status.ok{color:var(--accent)}
+.grid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+nav{display:flex;flex-direction:column;gap:4px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:760px){nav{position:static;flex-direction:row;flex-wrap:wrap}}
+.step-group{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:10px 0 2px;font-weight:600}
+@media (max-width:760px){.step-group{width:100%}}
+nav button{all:unset;cursor:pointer;padding:8px 12px;border-radius:8px;font-size:14px;color:var(--ink);display:flex;gap:8px;align-items:baseline}
+nav button .k{font-family:var(--mono);font-size:12px;color:var(--muted)}
+nav button:hover{background:var(--accent-soft)}
+nav button[aria-current="true"]{background:var(--accent);color:#fff}
+nav button[aria-current="true"] .k{color:#ffffffcc}
+nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.lesson{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+.lesson h2{margin:0 0 8px;font-size:19px;text-wrap:balance}
+.lesson p,.lesson li{max-width:68ch}
+.lesson p{margin:8px 0}
+.lesson code{font-family:var(--mono);font-size:13px;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.note{background:var(--warn-soft);color:var(--ink);border-left:3px solid var(--warn);padding:10px 14px;border-radius:6px;font-size:14px;margin-top:12px}
+.note b{color:var(--warn)}
+.editor{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.editor-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+.editor-bar span{font-size:12px;color:var(--muted)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:6px 16px;border-radius:8px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea{display:block;width:100%;min-height:170px;resize:vertical;border:0;padding:14px 16px;background:var(--code-bg);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.55;tab-size:2}
+textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.result{border-top:1px solid var(--line)}
+.meta{padding:8px 14px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.meta.err{color:var(--warn)}
+.table-wrap{overflow:auto;max-height:420px}
+table{border-collapse:collapse;font-size:13px;width:max-content;min-width:100%}
+th,td{padding:6px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--panel);font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:600}
+td.num{text-align:right}
+td.null{color:var(--muted);font-style:italic}
+tr:hover td{background:var(--accent-soft)}
+.mapping{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 18px;font-size:13px;margin:10px 0}
+.mapping div{display:flex;gap:8px;align-items:baseline}
+.mapping b{font-weight:500;min-width:70px}
+.mapping code{font-size:12px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+footer{margin-top:28px;font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>백카톤 SQL 연습장</h1>
+    <p>ERP 발주·입고·재고 데이터를 SQL로 같이 살펴보는 화면 · <span class="tag">가상 데이터</span></p>
+    <span class="status" id="status">SQL 엔진 불러오는 중…</span>
+  </header>
+
+  <div class="grid">
+    <nav id="nav" aria-label="단계"></nav>
+    <main>
+      <section class="lesson" id="lesson"></section>
+      <section class="editor">
+        <div class="editor-bar">
+          <span>SQL을 직접 고쳐서 실행해 보세요 · Ctrl/⌘ + Enter</span>
+          <div class="btns">
+            <button class="btn ghost" id="reset" type="button">원래 쿼리로</button>
+            <button class="btn" id="run" type="button" disabled>실행</button>
+          </div>
+        </div>
+        <textarea id="sql" spellcheck="false" aria-label="SQL 편집기"></textarea>
+        <div class="result">
+          <div class="meta" id="meta">실행 결과가 여기에 나와요.</div>
+          <div class="table-wrap" id="out"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <footer>여기 있는 데이터는 실제 ERP와 열 구조만 같은 가상 데이터예요. 거래처·바이어·품번·단가는 모두 가짜예요. 실행은 내 브라우저 안에서만 일어나고 어디에도 저장되지 않아요.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-asm.js"></script>
+<script>
+const DATA = __DATA__;
+const SCHEMA_SQL = __SCHEMA__;
+const CLEAN_SQL = __CLEAN__;
+const BC_SQL = __BC__;
+const TIMING_SQL = __TIMING__;
+const REC_SQL = __REC__;
+
+const LESSONS = [
+  { group: "1단계 · 데이터 준비", key: "1-①", title: "데이터는 3종류",
+    body: `
+      <h2>1-① 우리가 다루는 데이터는 3종류</h2>
+      <p>ERP에서 뽑은 엑셀 3종을 표로 옮겨 담았어요. 발주와 입고 엑셀은 열 구조가 똑같아서 한 표 <code>raw_order_lines</code>에 넣고, <code>extract_type</code> 칸에 '발주'인지 '입고'인지 적어서 구분해요. 재고는 <code>raw_inventory</code>에 들어 있어요.</p>
+      <div class="mapping">
+        <div><b>Part No</b><code>part_no</code></div>
+        <div><b>P/I No</b><code>pi_no</code></div>
+        <div><b>거래처</b><code>supplier</code></div>
+        <div><b>이전PI</b><code>prev_pi</code></div>
+        <div><b>원PI</b><code>orig_pi</code></div>
+        <div><b>발주일자</b><code>po_date</code></div>
+        <div><b>입고일자</b><code>rcv_date</code></div>
+        <div><b>잔여</b><code>free_qty</code></div>
+      </div>
+      <p>아래 쿼리는 "발주 파일, 입고 파일에 각각 몇 줄이 있는지" 세는 쿼리예요. 실행 버튼을 눌러 보세요.</p>
+      <div class="note"><b>해 보기</b> · 맨 아래 줄을 <code>SELECT * FROM raw_order_lines LIMIT 20;</code> 로 바꿔서 실행하면 원본이 어떻게 생겼는지 볼 수 있어요.</div>`,
+    sql: `-- 발주·입고 파일별로 몇 줄인지 세기
+SELECT extract_type   AS 구분,
+       extract_month  AS 기준월,
+       COUNT(*)       AS 줄수
+FROM raw_order_lines
+GROUP BY extract_type, extract_month
+ORDER BY extract_month, extract_type;` },
+
+  { group: "1단계 · 데이터 준비", key: "1-①+", title: "재고: 재고·발주·잔여",
+    body: `
+      <h2>1-① 재고 파일의 재고 · 발주 · 잔여</h2>
+      <p>재고 파일에는 수량이 세 칸 있어요.</p>
+      <ul>
+        <li><b>재고</b> <code>stock_qty</code> · 창고에 있는 전체 수량</li>
+        <li><b>발주</b> <code>allocated_qty</code> · 그중 이미 어떤 오더에 배정된 수량</li>
+        <li><b>잔여</b> <code>free_qty</code> · 재고 − 발주, 새 오더에 바로 쓸 수 있는 수량</li>
+      </ul>
+      <p>아래 쿼리는 잔여 재고가 많은 품목 20개를 보여줘요. 재고금액(<code>잔여 × 재고단가</code>)도 같이 계산했어요.</p>`,
+    sql: `-- 잔여(새 오더에 쓸 수 있는) 재고가 많은 품목
+SELECT part_no                     AS 품번,
+       description                 AS 품명,
+       stock_qty                   AS 재고,
+       allocated_qty               AS 발주배정,
+       free_qty                    AS 잔여,
+       stock_price                 AS 재고단가,
+       free_qty * stock_price      AS 잔여재고금액
+FROM raw_inventory
+ORDER BY 잔여재고금액 DESC
+LIMIT 20;` },
+
+  { group: "1단계 · 데이터 준비", key: "1-②", title: "품번 매칭 키",
+    body: `
+      <h2>1-② 품번이 왜 안 맞을까?</h2>
+      <p>같은 부품인데 하이픈이나 앞자리 0 때문에 다르게 적힌 품번이 있어요. 컴퓨터는 글자가 하나만 달라도 다른 품번으로 봐서, <b>재고가 있는데 "재고 없음"으로 판단하고 또 발주</b>하게 될 수 있어요.</p>
+      <p>그래서 원래 품번은 그대로 두고, 비교할 때만 쓰는 <b>매칭 키</b> <code>part_key</code>를 만들어요.</p>
+      <ol>
+        <li><code>TRIM</code> 앞뒤 공백 제거</li>
+        <li><code>REPLACE</code> 하이픈(-)·띄어쓰기 제거</li>
+        <li><code>UPPER</code> 대문자로 통일</li>
+        <li><code>LTRIM(…, '0')</code> 맨 앞의 0 제거</li>
+      </ol>
+      <p>아래는 일부러 다르게 적어 둔 예시 품번 6개예요. 실행해서 오른쪽 <code>part_key</code>가 같아지는지 보세요.</p>
+      <div class="note"><b>같이 판단할 것</b> · 하이픈만 다르고 실제로는 다른 부품인 경우가 회사에 있을까요? 있다면 이 규칙을 바꿔야 해요.</div>`,
+    sql: `-- 다르게 적힌 품번 → 매칭 키로 같아지는지 확인
+SELECT part_no AS 원래품번,
+       LTRIM(UPPER(REPLACE(REPLACE(TRIM(part_no), '-', ''), ' ', '')), '0') AS part_key
+FROM part_examples;` },
+
+  { group: "1단계 · 데이터 준비", key: "1-②+", title: "매칭 키로 묶어 보기",
+    body: `
+      <h2>1-② 매칭 키로 묶으면 무엇이 달라질까</h2>
+      <p>정제 뷰 <code>order_lines</code>에는 이미 <code>part_key</code>가 들어 있어요. 원래 품번 개수와 매칭 키 개수를 비교하면, 표기만 달라서 따로 잡히던 품번이 몇 개인지 알 수 있어요.</p>
+      <p>가상 데이터에도 하이픈이 빠진 품번을 일부러 섞어 두었어요. 두 숫자의 차이가 '표기만 달라서 따로 잡히던 품번' 수예요.</p>`,
+    sql: `-- 원래 품번 개수 vs 매칭 키 개수
+SELECT COUNT(DISTINCT part_no)  AS 원래품번_개수,
+       COUNT(DISTINCT part_key) AS 매칭키_개수,
+       COUNT(DISTINCT part_no) - COUNT(DISTINCT part_key) AS 합쳐진_품번수
+FROM order_lines;` },
+
+  { group: "1단계 · 데이터 준비", key: "1-③", title: "P/I 번호 읽기",
+    body: `
+      <h2>1-③ P/I 번호에서 바이어와 줄 유형 뽑기</h2>
+      <p>선적 P/I <code>S-ABCD01-02-24</code>는 이렇게 읽어요.</p>
+      <ul>
+        <li><code>S-ABCD01</code> · 바이어 코드 → <code>buyer_code</code></li>
+        <li><code>-02-24</code> · 2024년 2번째 선적</li>
+        <li>이전PI가 <code>…BC</code>로 끝나면 지난 선적에서 넘어온 백카톤</li>
+      </ul>
+      <p>그래서 모든 줄을 <code>line_type</code> 4가지로 나눴어요: <b>NEW</b> 신규 발주 · <b>BC_CARRY</b> 백카톤 이월 · <b>BACKORDER</b> 백오더 · <b>PLAN</b> 계획발주.</p>
+      <p>백카톤 줄은 날짜를 보고 한 번 더 나눠요 (<code>bc_kind</code>).</p>
+      <ul>
+        <li><b>BC_REUSE</b> · 입고일 ≤ 발주일 → 창고에 있던 백카톤을 이번 선적에 <b>재사용</b></li>
+        <li><b>BC_REPURCHASE</b> · 입고일 &gt; 발주일 → 지난 선적에 못 실은 물건을 <b>새로 구매</b></li>
+      </ul>
+      <div class="note"><b>해 보기</b> · <code>WHERE extract_type = '발주'</code> 를 <code>'입고'</code> 로 바꾸면 입고 파일 기준 비율이 나와요.</div>`,
+    sql: `-- 줄 유형별 건수와 비율 (발주 파일 기준)
+SELECT line_type                         AS 줄유형,
+       COALESCE(bc_kind, '-')            AS 백카톤_구분,
+       COUNT(*)                          AS 줄수,
+       ROUND(100.0 * COUNT(*) /
+         (SELECT COUNT(*) FROM order_lines WHERE extract_type = '발주'), 1) AS 비율_퍼센트,
+       ROUND(SUM(po_amount) / 1000000.0, 1) AS 발주금액_백만원
+FROM order_lines
+WHERE extract_type = '발주'
+GROUP BY line_type, bc_kind
+ORDER BY 줄수 DESC;` },
+
+  { group: "2단계 · 백카톤 원인", key: "2-①", title: "백카톤은 왜 생겼을까",
+    body: `
+      <h2>2-① 백카톤은 왜 생겼을까?</h2>
+      <p>백카톤 줄의 이전PI에서 <code>BC</code>를 떼면 <b>원래 실렸어야 할 선적 P/I</b>가 돼요. 그 P/I가 실제로 배에 실린 날(<code>raw_shipments.ship_date</code>)과 이 줄의 발주일·입고일을 비교하면 원인을 나눌 수 있어요.</p>
+      <ul>
+        <li><b>A. 입고 지연</b> · 발주는 선적 전에 했는데 입고가 선적보다 늦음</li>
+        <li><b>B. 발주 지연</b> · 선적이 끝난 뒤에 발주함</li>
+        <li><b>C. 입고됐는데 누락</b> · 선적 전에 들어왔는데 배에 안 실림</li>
+        <li><b>D. 백카톤 재사용</b> · 창고에 있던 백카톤을 다음 선적에 배정</li>
+      </ul>
+      <div class="note"><b>해 보기</b> · 맨 아래 <code>GROUP BY bc_cause</code> 를 <code>GROUP BY supplier, bc_cause</code> 로 바꾸고 SELECT에 <code>supplier</code>를 넣으면 거래처별 원인이 보여요.</div>`,
+    sql: `-- 백카톤 원인별 건수와 금액
+SELECT bc_cause                               AS 원인,
+       COUNT(*)                               AS 줄수,
+       ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) AS 비율,
+       ROUND(SUM(po_amount) / 1000000.0, 1)   AS 금액_백만원,
+       ROUND(AVG(days_late), 1)               AS 평균_지연일
+FROM bc_lines
+GROUP BY bc_cause
+ORDER BY 줄수 DESC;` },
+
+  { group: "2단계 · 백카톤 원인", key: "2-②", title: "거래처별 입고 지연",
+    body: `
+      <h2>2-② 어느 거래처가 백카톤을 많이 만들까?</h2>
+      <p>거래처마다 두 가지를 세서 비교해요.</p>
+      <ul>
+        <li><b>제때 실림</b> · 원래 선적 P/I에 그대로 실린 신규 발주 줄</li>
+        <li><b>늦어서 빠짐</b> · 입고가 선적보다 늦어 백카톤이 된 줄 (A. 입고 지연)</li>
+      </ul>
+      <p><b>지연율</b> = 늦어서 빠짐 ÷ (제때 실림 + 늦어서 빠짐). 줄 수가 적으면 우연일 수 있어서 연습장에서는 10줄 이상인 거래처만 봐요.</p>
+      <div class="note"><b>생각해 보기</b> · 건수가 많은 거래처와 지연율이 높은 거래처는 다를 수 있어요. <code>ORDER BY</code>를 <code>지연율 DESC</code>로 바꿔서 비교해 보세요.</div>`,
+    sql: `-- 거래처별 입고 지연 백카톤
+WITH on_time AS (
+  SELECT o.supplier, COUNT(*) AS n
+  FROM order_lines o
+  JOIN raw_shipments s ON s.pi_no = o.pi_no
+  WHERE o.extract_type = '발주' AND o.line_type = 'NEW'
+  GROUP BY o.supplier
+),
+late AS (
+  SELECT supplier, COUNT(*) AS n, AVG(days_late) AS avg_late
+  FROM bc_lines
+  WHERE bc_cause = 'A. 입고 지연'
+  GROUP BY supplier
+)
+SELECT t.supplier                  AS 거래처,
+       t.n                         AS 제때_실림,
+       COALESCE(l.n, 0)            AS 늦어서_빠짐,
+       ROUND(100.0 * COALESCE(l.n, 0) / (t.n + COALESCE(l.n, 0)), 1) AS 지연율,
+       ROUND(l.avg_late, 1)        AS 평균_지연일
+FROM on_time t
+LEFT JOIN late l ON l.supplier = t.supplier
+WHERE t.n + COALESCE(l.n, 0) >= 10
+ORDER BY 늦어서_빠짐 DESC;` },
+
+  { group: "3단계 · 발주 기준", key: "3-①", title: "늦어도 이날까지 발주",
+    body: `
+      <h2>3-① "늦어도 이날까지 발주" 기준</h2>
+      <p>거래처마다 리드타임(발주 → 입고)의 <b>80% 지점</b>을 구해요. "이 거래처 물건은 10번 중 8번은 이 일수 안에 들어온다"는 뜻이에요 (<code>supplier_lead.p80_lead</code>).</p>
+      <p><b>늦어도 발주해야 하는 날 = 선적일 − P80 리드타임</b></p>
+      <p>이 날짜보다 늦게 발주한 줄(<code>ordered_late = 1</code>)이 실제로 백카톤이 더 많이 됐는지 확인해서, 기준이 맞는지 검증해요.</p>
+      <div class="note"><b>해 보기</b> · <code>SELECT * FROM supplier_lead ORDER BY p80_lead DESC;</code> 로 거래처별 기준 일수를 볼 수 있어요.</div>`,
+    sql: `-- 기준보다 늦게 발주하면 백카톤이 정말 더 생길까?
+SELECT CASE ordered_late WHEN 1 THEN '기준보다 늦게 발주'
+                         ELSE '기준 안에 발주' END   AS 발주_시점,
+       COUNT(*)                                     AS 줄수,
+       SUM(became_bc)                               AS 백카톤_된_줄,
+       ROUND(100.0 * SUM(became_bc) / COUNT(*), 1)  AS 백카톤_비율
+FROM order_timing
+GROUP BY ordered_late;` },
+
+  { group: "3단계 · 발주 기준", key: "3-②", title: "권장 발주 수량",
+    body: `
+      <h2>3-② 새 오더가 들어오면: 권장 발주 수량과 위험도</h2>
+      <p>새 오더를 <code>incoming_orders</code> 표에 넣으면 품목마다 이렇게 계산해요.</p>
+      <ul>
+        <li><b>재고에서 쓸 양</b> = 오더 수량과 잔여 재고 중 작은 값</li>
+        <li><b>권장 발주량</b> = 오더 수량 − 잔여 재고 (0보다 작으면 0)</li>
+        <li><b>발주 기한</b> = 선적 예정일 − 거래처 P80 리드타임</li>
+        <li><b>위험도</b> · 검토일이 기한을 넘었으면 <b>높음</b>, 3일 안이면 <b>중간</b>, 그 밖은 <b>낮음</b></li>
+      </ul>
+      <p>아래는 예시 오더 5줄이에요. 담당자는 이 값을 참고해서 최종 발주를 결정해요.</p>
+      <div class="note"><b>해 보기</b> · 맨 위 INSERT 문에서 수량이나 날짜를 바꿔서 다시 실행해 보세요. 위험도가 어떻게 바뀌는지 볼 수 있어요.</div>`,
+    sql: `-- 예시 오더 넣기 (수량·날짜를 바꿔 보세요)
+DELETE FROM incoming_orders;
+INSERT INTO incoming_orders (pi_no, part_no, order_qty, ship_date, today) VALUES
+  ('S-DEMO01-01-24', '95422419',    500, '2024-06-20', '2024-05-10'),
+  ('S-DEMO01-01-24', '660668',     1200, '2024-06-20', '2024-05-10'),
+  ('S-DEMO01-01-24', '624090',     1000, '2024-06-20', '2024-05-31'),
+  ('S-DEMO01-01-24', '94846-F9357', 200, '2024-06-20', '2024-05-10'),
+  ('S-DEMO01-01-24', '80191803',    100, '2024-06-20', '2024-06-15');
+
+SELECT part_no            AS 품번,
+       order_qty          AS 오더수량,
+       free_stock         AS 잔여재고,
+       use_from_stock     AS 재고사용,
+       recommended_po_qty AS 권장발주,
+       supplier           AS 거래처,
+       p80_lead           AS P80_리드타임,
+       order_by_date      AS 발주기한,
+       risk               AS 위험도
+FROM reorder_recommendation;` },
+
+  { group: "자유 연습", key: "✎", title: "직접 써 보기",
+    body: `
+      <h2>직접 써 보기</h2>
+      <p>쓸 수 있는 표와 뷰예요.</p>
+      <ul>
+        <li><code>raw_order_lines</code> · 발주·입고 원본</li>
+        <li><code>raw_inventory</code> · 재고 원본</li>
+        <li><code>order_lines</code> · 정제 뷰 (part_key, buyer_code, line_type, lead_days 포함)</li>
+        <li><code>inventory</code> · 정제된 재고 (part_key, 재고금액 포함)</li>
+        <li><code>raw_shipments</code> · 선적 실적 (P/I별 실제 선적일)</li>
+        <li><code>supplier_lead</code> · 거래처별 평균·P80 리드타임</li>
+        <li><code>order_timing</code> · 줄별 '늦어도 발주일'과 실제 발주일 비교</li>
+        <li><code>incoming_orders</code> → <code>reorder_recommendation</code> · 새 오더의 권장 발주량·위험도</li>
+        <li><code>bc_lines</code> · 백카톤 줄 + 원인(<code>bc_cause</code>), 지연일(<code>days_late</code>)</li>
+      </ul>`,
+    sql: `-- 예: 공급업체별 평균 리드타임
+SELECT supplier AS 거래처,
+       COUNT(*) AS 입고건수,
+       ROUND(AVG(lead_days), 1) AS 평균리드타임_일
+FROM order_lines
+WHERE extract_type = '입고' AND line_type = 'NEW' AND lead_days IS NOT NULL
+GROUP BY supplier
+ORDER BY 평균리드타임_일 DESC;` },
+];
+
+const $ = (id) => document.getElementById(id);
+let db = null, current = 0;
+
+function renderNav(){
+  const nav = $("nav"); nav.innerHTML = ""; let lastGroup = null;
+  LESSONS.forEach((l, i) => {
+    if (l.group !== lastGroup){ const g = document.createElement("div"); g.className = "step-group"; g.textContent = l.group; nav.appendChild(g); lastGroup = l.group; }
+    const b = document.createElement("button"); b.type = "button";
+    b.innerHTML = `<span class="k">${l.key}</span><span>${l.title}</span>`;
+    b.setAttribute("aria-current", i === current ? "true" : "false");
+    b.onclick = () => show(i); nav.appendChild(b);
+  });
+}
+function show(i){
+  current = i; renderNav();
+  $("lesson").innerHTML = LESSONS[i].body;
+  $("sql").value = LESSONS[i].sql;
+  $("out").innerHTML = ""; $("meta").className = "meta"; $("meta").textContent = "실행 결과가 여기에 나와요.";
+  try { localStorage.setItem("sql-step", String(i)); } catch(e) {}
+  if (db) run();
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function run(){
+  if (!db) return;
+  const sql = $("sql").value; const t0 = performance.now();
+  try {
+    const res = db.exec(sql); const ms = (performance.now() - t0).toFixed(0);
+    if (!res.length){ $("meta").className = "meta"; $("meta").textContent = `실행 완료 · 돌려줄 결과가 없는 쿼리예요 (${ms}ms)`; $("out").innerHTML = ""; return; }
+    const r = res[res.length - 1]; const shown = r.values.slice(0, 500);
+    let h = "<table><thead><tr>" + r.columns.map(c => `<th>${esc(c)}</th>`).join("") + "</tr></thead><tbody>";
+    for (const row of shown){
+      h += "<tr>" + row.map(v => v === null ? `<td class="null">NULL</td>` :
+        (typeof v === "number" ? `<td class="num">${v.toLocaleString("ko-KR")}</td>` : `<td>${esc(v)}</td>`)).join("") + "</tr>";
+    }
+    $("out").innerHTML = h + "</tbody></table>";
+    $("meta").className = "meta";
+    $("meta").textContent = `${r.values.length.toLocaleString()}줄${r.values.length > 500 ? " (앞 500줄만 표시)" : ""} · ${ms}ms`;
+  } catch(e){
+    $("meta").className = "meta err"; $("meta").textContent = "오류: " + e.message + " · 철자, 쉼표, 따옴표를 확인해 보세요."; $("out").innerHTML = "";
+  }
+}
+
+$("run").onclick = run;
+$("reset").onclick = () => { $("sql").value = LESSONS[current].sql; run(); };
+$("sql").addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){ e.preventDefault(); run(); } });
+
+try { const s = parseInt(localStorage.getItem("sql-step") || "0", 10); if (s >= 0 && s < LESSONS.length) current = s; } catch(e) {}
+show(current);
+
+initSqlJs().then(SQL => {
+  db = new SQL.Database();
+  db.exec(SCHEMA_SQL);
+  for (const t of DATA){
+    const stmt = db.prepare(`INSERT INTO ${t.t} (${t.cols.join(",")}) VALUES (${t.cols.map(() => "?").join(",")})`);
+    db.exec("BEGIN"); for (const r of t.rows) stmt.run(r); db.exec("COMMIT"); stmt.free();
+  }
+  db.exec(`CREATE TABLE part_examples(part_no TEXT);
+    INSERT INTO part_examples VALUES ('31200-04500'),('3120004500'),('0K820-14-302'),('0K820-14302'),('0847215'),('847215');`);
+  db.exec(CLEAN_SQL);
+  db.exec(BC_SQL);
+  db.exec(TIMING_SQL);
+  db.exec(REC_SQL);
+  $("status").textContent = "준비 완료"; $("status").className = "status ok";
+  $("run").disabled = false; run();
+}).catch(e => { $("status").textContent = "SQL 엔진을 불러오지 못했어요: " + e.message; });
+</script>
