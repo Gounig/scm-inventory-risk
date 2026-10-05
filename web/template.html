@@ -110,6 +110,7 @@ const CLEAN_SQL = __CLEAN__;
 const BC_SQL = __BC__;
 const TIMING_SQL = __TIMING__;
 const REC_SQL = __REC__;
+const ACT_SQL = __ACT__;
 
 const LESSONS = [
   { group: "1단계 · 데이터 준비", key: "1-①", title: "데이터는 3종류",
@@ -317,6 +318,38 @@ SELECT part_no            AS 품번,
        order_by_date      AS 발주기한,
        risk               AS 위험도
 FROM reorder_recommendation;` },
+  { group: "3단계 · 발주 기준", key: "3-③", title: "품목별 다음 액션",
+    body: `
+      <h2>3-③ 그래서 지금 뭘 해야 할까: 품목별 다음 액션</h2>
+      <p>검토일 기준으로 품목마다 할 일을 하나씩 붙여요. 기준일과 배수는 <code>review_settings</code> 표에 있어요.</p>
+      <ul>
+        <li><b>과다재고 → 입고 중단</b> · 잔여 재고 + 입고 예정이 (대기 바이어 오더 + 최근 3개월 월평균 오더 × 1.5)를 넘으면, 넘는 만큼 입고를 멈추거나 줄여요</li>
+        <li><b>미입고 지연 → 거래처 독촉</b> · 아직 안 들어왔는데 발주일 + 거래처 P80 리드타임이 지났으면 독촉해요 (과다재고 품목은 독촉하지 않아요)</li>
+        <li><b>발주 필요 → 발주</b> · 3-②에서 위험도가 높음·중간인 품목</li>
+        <li><b>과다재고 → 신규 발주 보류</b> · 입고 예정은 없지만 꾸준히 팔리는 품목의 재고가 1.5개월 치를 넘을 때</li>
+      </ul>
+      <div class="note"><b>해 보기</b> · 맨 위 <code>UPDATE review_settings</code> 줄에서 배수를 2로 바꿔서 실행해 보세요. 과다재고로 잡히는 품목이 줄어들어요.</div>`,
+    sql: `-- 기준 바꿔 보기 (기준일, 과다재고 배수, 월평균 계산 기간)
+UPDATE review_settings SET today = '2024-06-10', excess_ratio = 1.5, demand_months = 3;
+
+-- 3-②와 같은 예시 오더로 맞춰 두기
+DELETE FROM incoming_orders;
+INSERT INTO incoming_orders VALUES
+  ('S-DEMO01-01-24', '64667109',     80,  '2024-06-28', '2024-06-10'),
+  ('S-DEMO01-01-24', '95154-39627',  150, '2024-06-28', '2024-06-10'),
+  ('S-DEMO01-01-24', '0K19A-86-609', 50,  '2024-06-25', '2024-06-10'),
+  ('S-DEMO01-01-24', '0K21A45420',   40,  '2024-06-30', '2024-06-10'),
+  ('S-DEMO01-01-24', '0K23A-10-586', 30,  '2024-07-20', '2024-06-10');
+
+SELECT status   AS 상태,
+       action   AS 액션,
+       part_no  AS 품번,
+       supplier AS 거래처,
+       qty      AS 수량,
+       free_qty AS 잔여재고,
+       note     AS 이유
+FROM action_list
+ORDER BY priority, status;` },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -381,6 +414,7 @@ initSqlJs().then(SQL => {
   db.exec(BC_SQL);
   db.exec(TIMING_SQL);
   db.exec(REC_SQL);
+  db.exec(ACT_SQL);
   $("status").textContent = "준비 완료"; $("status").className = "status ok";
   $("run").disabled = false; run();
 }).catch(e => { $("status").textContent = "SQL 엔진을 불러오지 못했어요: " + e.message; });
