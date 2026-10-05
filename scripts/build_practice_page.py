@@ -26,7 +26,8 @@ page = (page.replace("__DATA__", json.dumps(data, ensure_ascii=False, separators
             .replace("__CLEAN__", sql("02_clean.sql"))
             .replace("__BC__", sql("03_bc_causes.sql", "-- [분석 1]"))
             .replace("__TIMING__", sql("04_order_timing.sql", "-- [분석 4]"))
-            .replace("__REC__", sql("05_recommend.sql", "-- [분석 5]")))
+            .replace("__REC__", sql("05_recommend.sql", "-- [분석 5]"))
+            .replace("__ACT__", sql("06_actions.sql", "-- [분석 6]")))
 # 인터넷 없이도 열리도록 SQL 엔진(sql.js)을 같은 폴더의 파일로 불러온다
 page = page.replace("https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-asm.js", "sql-asm.js")
 out = ROOT / "docs" / "index.html"

@@ -20,7 +20,7 @@ if "--no-generate" not in sys.argv:
 subprocess.run([sys.executable, ROOT / "scripts" / "load_erp.py", src, db], check=True)
 
 con = sqlite3.connect(db)
-for name in ["02_clean.sql", "03_bc_causes.sql", "04_order_timing.sql", "05_recommend.sql"]:
+for name in ["02_clean.sql", "03_bc_causes.sql", "04_order_timing.sql", "05_recommend.sql", "06_actions.sql"]:
     text = (ROOT / "sql" / name).read_text(encoding="utf-8")
     parts = re.split(r"\n(?=-- \[분석 \d\])", text)
     con.executescript(parts[0])                       # 뷰·표 만들기
