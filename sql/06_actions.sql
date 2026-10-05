@@ -141,3 +141,19 @@ SELECT status AS 상태,
 FROM action_list
 GROUP BY status, CASE WHEN action LIKE '입고 수량 축소%' THEN '입고 수량 축소' WHEN action LIKE '발주 (%' THEN '발주' ELSE action END
 ORDER BY MIN(priority), 건수 DESC;
+
+
+-- [분석 7] 과거 검증: 독촉 기준이 있었다면 입고 지연 이월을 미리 잡을 수 있었을까?
+--   입고 지연(A)으로 넘어간 줄 중, 선적일 전에 이미 '발주일 + P80'을 넘긴 줄
+--   = 선적 전에 독촉 대상으로 떴을 줄
+SELECT COUNT(*)                                                    AS 입고지연_건수,
+       SUM(CASE WHEN DATE(b.po_date, '+' || sl.p80_lead || ' days') < b.missed_ship_date
+                THEN 1 ELSE 0 END)                                 AS 선적전_독촉가능_건수,
+       ROUND(100.0 * SUM(CASE WHEN DATE(b.po_date, '+' || sl.p80_lead || ' days') < b.missed_ship_date
+                THEN 1 ELSE 0 END) / COUNT(*), 1)                  AS 비율,
+       ROUND(AVG(CASE WHEN DATE(b.po_date, '+' || sl.p80_lead || ' days') < b.missed_ship_date
+                THEN JULIANDAY(b.missed_ship_date)
+                     - JULIANDAY(DATE(b.po_date, '+' || sl.p80_lead || ' days')) END), 1) AS 선적_며칠전_평균
+FROM bc_lines b
+JOIN supplier_lead sl ON sl.supplier = b.supplier
+WHERE b.bc_cause = 'A. 입고 지연';
