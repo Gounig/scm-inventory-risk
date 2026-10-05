@@ -317,30 +317,6 @@ SELECT part_no            AS 품번,
        order_by_date      AS 발주기한,
        risk               AS 위험도
 FROM reorder_recommendation;` },
-
-  { group: "자유 연습", key: "✎", title: "직접 써 보기",
-    body: `
-      <h2>직접 써 보기</h2>
-      <p>쓸 수 있는 표와 뷰예요.</p>
-      <ul>
-        <li><code>raw_order_lines</code> · 발주·입고 원본</li>
-        <li><code>raw_inventory</code> · 재고 원본</li>
-        <li><code>order_lines</code> · 정제 뷰 (part_key, buyer_code, line_type, lead_days 포함)</li>
-        <li><code>inventory</code> · 정제된 재고 (part_key, 재고금액 포함)</li>
-        <li><code>raw_shipments</code> · 선적 실적 (P/I별 실제 선적일)</li>
-        <li><code>supplier_lead</code> · 거래처별 평균·P80 리드타임</li>
-        <li><code>order_timing</code> · 줄별 '늦어도 발주일'과 실제 발주일 비교</li>
-        <li><code>incoming_orders</code> → <code>reorder_recommendation</code> · 새 오더의 권장 발주량·위험도</li>
-        <li><code>bc_lines</code> · 백카톤 줄 + 원인(<code>bc_cause</code>), 지연일(<code>days_late</code>)</li>
-      </ul>`,
-    sql: `-- 예: 공급업체별 평균 리드타임
-SELECT supplier AS 거래처,
-       COUNT(*) AS 입고건수,
-       ROUND(AVG(lead_days), 1) AS 평균리드타임_일
-FROM order_lines
-WHERE extract_type = '입고' AND line_type = 'NEW' AND lead_days IS NOT NULL
-GROUP BY supplier
-ORDER BY 평균리드타임_일 DESC;` },
 ];
 
 const $ = (id) => document.getElementById(id);
