@@ -1,18 +1,18 @@
-# 📦 SCM 재고관리 · 백카톤 리스크 분석 (SQL)
+#  SCM 재고관리 · 백카톤 리스크 분석 (SQL)
 
 자동차 애프터마켓 부품 수출 회사의 **발주·입고·재고·선적 ERP 데이터**로
 "선적에 못 실리고 다음 배로 넘어가는 물량(백카톤, Back Carton)"이 **왜 생기는지** 찾고,
 **언제까지 얼마나 발주해야 하는지** 알려 주는 규칙을 SQL(SQLite)로 만든 프로젝트입니다.
 
-> ⚠️ 이 저장소의 데이터는 **모두 가상 데이터**입니다.
+> 이 저장소의 데이터는 **모두 가상 데이터**입니다.
 > 실제 ERP 내보내기 파일과 **컬럼 구조만 같고**, 회사·거래처·바이어·품번·금액은 전부 만들어 낸 값입니다.
 > 실제 데이터 분석은 사내에서만 진행했고 공개하지 않습니다.
 
 | 보는 방법 | 링크 |
 |---|---|
-| 📓 분석 노트북 (SQL + 결과 + 차트) | [`notebooks/analysis.ipynb`](https://github.com/Gounig/scm-inventory-risk/blob/main/notebooks/analysis.ipynb) |
-| 📊 대시보드 (Power BI) | [화면 보기](#power-bi-대시보드) · [`scm-dashboard.pbix`](scm-dashboard.pbix) |
-| 🧪 브라우저에서 직접 SQL 실행 | [SQL 연습장 열기](https://gounig.github.io/scm-inventory-risk/docs/) |
+| 분석 노트북 (SQL + 결과 + 차트) | [`notebooks/analysis.ipynb`](https://github.com/Gounig/scm-inventory-risk/blob/main/notebooks/analysis.ipynb) |
+| 대시보드 (Power BI) | [화면 보기](#power-bi-대시보드) · [`scm-dashboard.pbix`](scm-dashboard.pbix) |
+| 브라우저에서 직접 SQL 실행 | [SQL 연습장 열기](https://gounig.github.io/scm-inventory-risk/docs/) |
 
 ---
 
