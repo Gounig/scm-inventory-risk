@@ -11,7 +11,7 @@
 | 보는 방법 | 링크 |
 |---|---|
 | 📓 분석 노트북 (SQL + 결과 + 차트) | [`notebooks/analysis.ipynb`](https://github.com/Gounig/scm-inventory-risk/blob/main/notebooks/analysis.ipynb) |
-| 📊 대시보드 (Power BI) | _준비 중_ |
+| 📊 대시보드 (Power BI) | [화면 보기](#power-bi-대시보드) · [`scm-dashboard.pbix`](scm-dashboard.pbix) |
 | 🧪 브라우저에서 직접 SQL 실행 | [SQL 연습장 열기](https://gounig.github.io/scm-inventory-risk/docs/) |
 
 ---
@@ -65,6 +65,10 @@
 
 > 가상 데이터는 규칙을 확인하려고 비율을 정해서 만든 값이라, 아래 숫자 자체에 의미는 없습니다.
 > "이런 식으로 결과가 나온다"를 보여 주는 용도입니다.
+
+### Power BI 대시보드
+![Power BI 대시보드](dashboard.png)
+`data/exports/` 의 CSV 4개를 불러와 DAX 측정값(COUNTROWS · CALCULATE · DIVIDE)으로 만든 1페이지 대시보드
 
 ### 백카톤 원인 — 절반 이상이 입고 지연
 ![백카톤 원인](images/01_bc_causes.png)
@@ -156,6 +160,8 @@ python scripts/load_erp.py data/private private.db
 ├── images/              # 결과 차트
 ├── data/sample/         # 가상 데이터 (엑셀)
 ├── data/exports/        # 대시보드용 CSV
+├── scm-dashboard.pbix   # Power BI 대시보드
+├── dashboard.png        # 대시보드 캡처
 ├── web/template.html    # 연습장 템플릿
 └── docs/
     ├── index.html       # SQL 연습장 (GitHub Pages)
